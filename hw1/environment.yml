@@ -37,7 +37,6 @@ dependencies:
   - torchtext
   - torchvision
   - tqdm
-  - x264
   - pip
   - pip:
     - torchviz
