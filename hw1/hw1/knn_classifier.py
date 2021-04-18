@@ -34,8 +34,10 @@ class KNNClassifier(object):
         x_train = torch.tensor([])
         y_train = torch.tensor([])
         for data in dl_train:
-            torch.cat((x_train, data[0]), 0)
-            torch.cat((y_train, data[1]), 0)
+            image = data[0]
+            label = data[1]
+            x_train = torch.cat([image, x_train], 0)
+            y_train = torch.cat([label, y_train], 0)
             
         n_classes = len(torch.unique(y_train))
         # ========================
@@ -69,7 +71,7 @@ class KNNClassifier(object):
             #  - Set y_pred[i] to the most common class among them
             #  - Don't use an explicit loop.
             # ====== YOUR CODE: ======
-            k_labels = y_train[torch.topk(dist_matrix, self.k, largest=False).indices]
+            k_labels = self.y_train[torch.topk(dist_matrix[:, i], self.k, largest=False).indices]
             y_pred[i] = torch.mode(k_labels).values.item()
             # ========================
 
