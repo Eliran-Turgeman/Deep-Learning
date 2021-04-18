@@ -10,7 +10,10 @@ math (delimited with $$).
 
 part1_q1 = r"""
 **Your answer:**
-
+true
+false
+true
+true
 
 Write your answer using **markdown** and $\LaTeX$:
 ```python

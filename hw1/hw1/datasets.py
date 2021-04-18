@@ -22,7 +22,7 @@ def random_labelled_image(
     #  Implement according to the docstring description.
     # ====== YOUR CODE: ======
     image = torch.randint(low, high, shape).to(dtype)
-    label = np.random.randint(0, num_classes)
+    label = torch.randint(0, num_classes, (1,)).item()
     # ========================
     return image, label
 
