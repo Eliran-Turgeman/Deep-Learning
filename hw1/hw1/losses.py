@@ -52,12 +52,19 @@ class SVMHingeLoss(ClassifierLoss):
 
         loss = None
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        rows = list(range(x_scores.size()[0]))
+        num_samples = x.size()[0]
+        marginal_hinge_loss = x_scores - x_scores[rows, y].unsqueeze(1) + self.delta
+        marginal_hinge_loss[rows, y] = 0
+        marginal_hinge_loss[marginal_hinge_loss < 0] = 0
+        loss_per_sample = torch.sum(marginal_hinge_loss, dim=1)
+        loss = sum(loss_per_sample) / num_samples
         # ========================
 
         # TODO: Save what you need for gradient calculation in self.grad_ctx
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        self.grad_ctx = dict({'marginal_hinge_loss': marginal_hinge_loss, 'y': y,
+                              'x': x, 'rows': rows})
         # ========================
 
         return loss
@@ -75,7 +82,14 @@ class SVMHingeLoss(ClassifierLoss):
 
         grad = None
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        marginal_hinge_loss = self.grad_ctx['marginal_hinge_loss']
+        y = self.grad_ctx['y']
+        x = self.grad_ctx['x']
+        rows = self.grad_ctx['rows']
+        marginal_hinge_loss[marginal_hinge_loss > 0] = 1
+        y_marginal_hinge_loss = - 1 * torch.sum(marginal_hinge_loss, dim=1)
+        marginal_hinge_loss[rows, y] = y_marginal_hinge_loss
+        grad = torch.matmul(x.transpose(0, 1), marginal_hinge_loss) / len(rows)
         # ========================
 
         return grad
