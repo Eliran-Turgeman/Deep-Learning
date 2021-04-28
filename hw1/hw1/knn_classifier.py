@@ -155,52 +155,16 @@ def find_best_k(ds_train: Dataset, k_choices, num_folds):
         #  You can use your train/validation splitter from part 1 (note that
         #  then it won't be exactly k-fold CV since it will be a
         #  random split each iteration), or implement something else.
-
         # ====== YOUR CODE: ======
-#         acc = []
-#         parts = math.floor(len(ds_train) / num_folds)
-#         indices = list(range(len(ds_train)))
-#         for k in range(num_folds):
-#             validation_set = indices[parts * k : parts * (k + 1)]
-#             training_set = indices[0 : parts * k].append(indices[parts * (k + 1): len(ds_train)])
-            
-#             validation_sampler = torch.utils.data.SubsetRandomSampler(validation_set)
-#             training_sampler = torch.utils.data.SubsetRandomSampler(training_set)
-            
-#             dl_train = torch.utils.data.DataLoader(ds_train, sampler=training_sampler)
-#             dl_valid = torch.utils.data.DataLoader(ds_train, sampler=validation_set)
-            
-#             model.train(dl_train)
-#             x_valid, y_valid = dataloader_utils.flatten(dl_valid)
-#             y_pred = model.predict(x_valid)
-#             acc.append(accuracy(y_valid, y_pred))
-        
-#         accuracies.append(acc)
-        acc = []
-        num_samples = len(ds_train)
-        p = math.floor(num_samples / num_folds)
-        indices = torch.randperm(num_samples)
-        for k_fold in range(num_folds):
-            if k_fold == num_folds-1:
-                valid_inx = indices[-p:]
-                train_inx = indices[:-p]
-            else:
-                valid_inx = indices[k_fold*p:(k_fold+1)*p]
-                mask = torch.ones(num_samples, dtype=bool)
-                mask[k_fold*p:(k_fold+1)*p] = False
-                train_inx = torch.masked_select(indices, mask)
-                
-            valid_sampler = torch.utils.data.SubsetRandomSampler(valid_inx)
-            train_sampler = torch.utils.data.SubsetRandomSampler(train_inx)
-            
-            dl_train = torch.utils.data.DataLoader(ds_train, sampler=train_sampler)
-            dl_valid = torch.utils.data.DataLoader(ds_train, sampler=valid_sampler)
-            
+        model_acc=[]
+        for j in range(num_folds):
+            dl_train, dl_valid = dataloaders.create_train_validation_loaders(ds_train, 1.0/num_folds, batch_size=48)                                                                 
             model.train(dl_train)
             x_valid, y_valid = dataloader_utils.flatten(dl_valid)
             y_pred = model.predict(x_valid)
-            acc.append(accuracy(y_valid, y_pred))
-        accuracies.append(acc)
+            acc = accuracy(y_valid,y_pred)
+            model_acc.append(acc)
+        accuracies.append(model_acc) 
                 
         # ========================
 
