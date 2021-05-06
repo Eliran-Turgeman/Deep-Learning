@@ -14,7 +14,7 @@ part1_q1 = r"""
 2. False. We should pick the best subset of the data that can maximize the representation of our data set. A random pick can give us bad representation
    and therefore give us a bad results. 
 3. True. The test set should be used when evaluating the performance of the model and nothing else. 
-4. True
+4. False. The validation set is used to learning the parameters while using in sample data and to get a generalization error we need out of sample data which is the test set.
 
 
 """
