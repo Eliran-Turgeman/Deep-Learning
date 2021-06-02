@@ -86,7 +86,7 @@ class Trainer(abc.ABC):
             for loss in train_epoch_res[0]:
                 curr_loss_to_append += loss;
             curr_loss_to_append = curr_loss_to_append / len(train_epoch_res[0])
-            train_loss.append(curr_loss_to_append)
+            train_loss.append(curr_loss_to_append.item())
             
             test_epoch_res = self.test_epoch(dl_test, **kw)
             test_acc.append(test_epoch_res[1])
@@ -94,7 +94,7 @@ class Trainer(abc.ABC):
             for loss in test_epoch_res[0]:
                 curr_loss_to_append += loss
             curr_loss_to_append = curr_loss_to_append / len(test_epoch_res[0])
-            test_loss.append(curr_loss_to_append)
+            test_loss.append(curr_loss_to_append.item())
             
             if len(test_loss) > 1 and test_loss[-2] < curr_loss_to_append:
                 epochs_without_improvement += 1
