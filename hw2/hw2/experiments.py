@@ -41,6 +41,13 @@ def run_experiment(
     hidden_dims=[1024],
     model_type="cnn",
     # You can add extra configuration for your experiments here
+    conv_params=dict(kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+    activation_type="lrelu",
+    activation_params=dict(negative_slope=0.01),
+    pooling_type="avg",
+    pooling_params=dict(kernel_size=2),
+    batchnorm=True,
+    dropout=0.1,
     **kw,
 ):
     """
@@ -80,17 +87,45 @@ def run_experiment(
     num_classes = 10
     channels = [channel for channel in filters_per_layer for _ in range(layers_per_block)]
     in_size = ds_train[0][0].shape
-    model = model_cls(in_size=in_size,
-                      out_classes=num_classes,
-                      channels=channels,
-                      pool_every=pool_every,
-                      hidden_dims=hidden_dims,
-                      activation_type='lrelu',
-                      activation_params=dict(negative_slope=0.01),
-                      pooling_type='avg',
-                      pooling_params=dict(kernel_size=2),
-                      batchnorm=True,
-                      dropout=0.1,)
+    
+    if model_type=="cnn":
+        model = model_cls(in_size=in_size,
+                          out_classes=num_classes,
+                          channels=channels,
+                          pool_every=pool_every,
+                          hidden_dims=hidden_dims,
+                          conv_params =conv_params,
+                          activation_type=activation_type,
+                          activation_params=activation_params,
+                          pooling_type=pooling_type,
+                          pooling_params=pooling_params,
+        )
+    elif model_type == "resnet":
+        model = model_cls(in_size=in_size,
+                          out_classes=num_classes,
+                          channels=channels,
+                          pool_every=pool_every,
+                          hidden_dims=hidden_dims,
+                          conv_params=conv_params  ,#dict(kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+                          activation_type=activation_type,  #'lrelu',
+                          activation_params=activation_params,  #dict(negative_slope=0.01),
+                          pooling_type=pooling_type,  #'avg',
+                          pooling_params=pooling_params,  #dict(kernel_size=2),
+                          batchnorm=batchnorm,
+                          dropout=dropout,)
+
+    else:
+        model = model_cls(
+            in_size=in_size,
+            out_classes=num_classes,
+            channels=channels,
+            pool_every=pool_every,
+            hidden_dims=hidden_dims,
+            batchnorm=batchnorm,
+            dropout=dropout,
+            conv_params=conv_params,
+            pooling_params=pooling_params,)
+        
     loss_fn = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=reg)
     trainer = training.TorchTrainer(model, loss_fn, optimizer, device)
