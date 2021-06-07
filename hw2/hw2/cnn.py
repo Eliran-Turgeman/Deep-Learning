@@ -453,71 +453,66 @@ class ResNetClassifier(ConvClassifier):
 
 
 class YourCodeNet(ConvClassifier):
-    def __init__(self, *args, **kwargs):
+    def __init__(
+        self,
+        in_size,
+        out_classes,
+        channels,
+        pool_every,
+        hidden_dims,
+        batchnorm=False,
+        dropout=0.0,
+        conv_params ={},
+        pooling_params= {},
+        **kwargs,
+    ):
         """
         See ConvClassifier.__init__
         """
-        super().__init__(*args, **kwargs)
+        self.batchnorm = batchnorm
+        self.dropout = dropout
 
+        super().__init__(
+            in_size, out_classes, channels, pool_every, hidden_dims, conv_params=conv_params, pooling_params=pooling_params,**kwargs
+        )
+
+        # self.conv_params = conv_params
+        # self.pooling_params = pooling_params
         # TODO: Add any additional initialization as needed.
         # ====== YOUR CODE: ======
-    def _make_feature_extractor(self):
-        in_channels, in_h, in_w, = tuple(self.in_size)
+        # raise NotImplementedError()
+        # ========================
 
-        layers = []
-
-        layers.append(nn.Conv2d(in_channels, 32, kernel_size=3, padding=2))
-        layers.append(nn.BatchNorm2d(32))
-        layers.append(nn.ReLU())
-
-        layers.append(nn.MaxPool2d(kernel_size=2))
-
-        layers.append(nn.Conv2d(32, 64, kernel_size=3, padding=2))
-        layers.append(nn.BatchNorm2d(64))
-        layers.append(nn.ReLU())
-
-        layers.append(nn.MaxPool2d(kernel_size=2))
-
-        layers.append(nn.Conv2d(64, 128, kernel_size=3, padding=2))
-        layers.append(nn.BatchNorm2d(128))
-        layers.append(nn.ReLU())
-
-        layers.append(nn.MaxPool2d(kernel_size=2))
-
-        layers.append(nn.Conv2d(128, 64, kernel_size=3, padding=2))
-        layers.append(nn.BatchNorm2d(64))
-        layers.append(nn.ReLU())
-
-        layers.append(nn.MaxPool2d(kernel_size=2))
-
-        layers.append(nn.Conv2d(64, 32, kernel_size=3, padding=2))
-        layers.append(nn.BatchNorm2d(32))
-        layers.append(nn.ReLU())
-
-        seq = nn.Sequential(*layers)
-        return seq
-
-    def _make_classifier(self):
-        layers = []
-
-        layers.append(nn.Linear(3200, 100))
-        layers.append(nn.ReLU())
-        layers.append(nn.Linear(100, 200))
-        layers.append(nn.ReLU())
-        layers.append(nn.Linear(200, 400))
-        layers.append(nn.ReLU())
-        layers.append(nn.Linear(400, 200))
-        layers.append(nn.ReLU())
-        layers.append(nn.Linear(200, 100))
-        layers.append(nn.ReLU())
-
-        layers.append(nn.Linear(100, self.out_classes))        
-    # ========================
     # TODO: Change whatever you want about the ConvClassifier to try to
     #  improve it's results on CIFAR-10.
     #  For example, add batchnorm, dropout, skip connections, change conv
     #  filter sizes etc.
     # ====== YOUR CODE: ======
+    # raise NotImplementedError()
+    def _make_feature_extractor(self):
+        layers = []
+        in_channels, in_h, in_w, = tuple(self.in_size)
+
+        channels_list = [in_channels] + list(self.channels)
+        N = len(self.channels)
+        P = self.pool_every
+
+        for i in range(N):
+            # print(self.conv_params)
+            # print(self.pooling_params)
+            layers.append(nn.Conv2d(channels_list[i],
+                                    channels_list[i + 1],
+                                    *self.conv_params.values()))
+            if self.batchnorm:
+                layers.append(nn.BatchNorm2d(channels_list[i + 1]))
+            layers.append(ACTIVATIONS[self.activation_type](*self.activation_params.values()))
+
+            if (i + 1) % P == 0:
+                layers.append(POOLINGS[self.pooling_type](*self.pooling_params.values()))
+                if self.dropout:
+                    layers.append(nn.Dropout2d(self.dropout))
+
+
+        # ========================
         seq = nn.Sequential(*layers)
         return seq
-    # ========================
