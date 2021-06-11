@@ -75,6 +75,7 @@ class ConvClassifier(nn.Module):
         #  Note: If N is not divisible by P, then N mod P additional
         #  CONV->ACTs should exist at the end, without a POOL after them.
         # ====== YOUR CODE: ======
+        # raise NotImplementedError()
         channels_list = [in_channels] + list(self.channels)
         N = len(self.channels)
         P = self.pool_every
@@ -124,6 +125,12 @@ class ConvClassifier(nn.Module):
             else:
                 stride = (1,1)
 
+            # print("========convo===========")
+            # print("kernel = " + str(kernel_size))
+            # print("padding = " + str(padding))
+            # print("dilation = " + str(dilation))
+            # print("stride = " + str(stride))
+
             h_out = floor(((h_in + 2 *padding[0] - dilation[0]*(kernel_size[0]-1)-1)/stride[0])+1)
             w_out = floor(((w_in + 2 *padding[1] - dilation[1]*(kernel_size[1]-1)-1)/stride[1])+1)
             # print(h_out , w_out)
@@ -134,6 +141,9 @@ class ConvClassifier(nn.Module):
             if "kernel_size" in self.pooling_params.keys():
                 kernel_size = (self.pooling_params['kernel_size'], self.pooling_params['kernel_size']) if isinstance(
                     self.pooling_params['kernel_size'], int) else self.pooling_params['kernel_size']
+            # else:
+            #     kernel_size = (self.kernel_size, self.kernel_size) if isinstance(
+            #         self.kernel_size, int) else self.kernel_size
 
             if "padding" in self.pooling_params.keys():
                 padding = (self.pooling_params['padding'], self.pooling_params['padding']) if isinstance(
@@ -153,8 +163,15 @@ class ConvClassifier(nn.Module):
             else:
                 stride = kernel_size
 
+            # print("========pooling===========")
+            # print("kernel = " + str(kernel_size))
+            # print("padding = " + str(padding))
+            # print("dilation = " + str(dilation))
+            # print("stride = " + str(stride))
+
             h_out = floor(((h_in + 2 * padding[0] - dilation[0] * (kernel_size[0] - 1) - 1) / stride[0]) + 1)
             w_out = floor(((w_in + 2 * padding[1] - dilation[1] * (kernel_size[1] - 1) - 1) / stride[1]) + 1)
+            # print(h_out , w_out)
             return h_out, w_out
 
         # Make sure to not mess up the random state.
@@ -173,6 +190,14 @@ class ConvClassifier(nn.Module):
                     in_h, in_w = pool_size(in_h, in_w)
 
             return in_h * in_w * self.channels[-1]
+
+
+
+
+            # return self.channels[-1] * ceil((in_h * in_w) / ((self.pooling_params['kernel_size'] * self.pooling_params['kernel_size']) ** (len(self.channels) // self.pool_every)))
+            # return self.channels[-1] * self.conv_params['kernel_size'] * self.conv_params['kernel_size']
+
+            # raise NotImplementedError()
             # ========================
         finally:
             torch.set_rng_state(rng_state)
@@ -182,6 +207,7 @@ class ConvClassifier(nn.Module):
 
         # Discover the number of features after the CNN part.
         n_features = self._n_features()
+        # print("n features = " + str(n_features))
 
         # TODO: Create the classifier part of the model:
         #  (FC -> ACT)*M -> Linear
@@ -203,7 +229,9 @@ class ConvClassifier(nn.Module):
         #  return class scores.
         # ====== YOUR CODE: ======
         features = self.feature_extractor(x)
+        # print(features.shape)
         features = features.view(features.size(0), -1)
+        # print(features.shape)
         # note: no need to reshape the features now
         out = self.classifier(features)
         # ========================
@@ -345,8 +373,9 @@ class ResidualBottleneckBlock(ResidualBlock):
         """
         # ====== YOUR CODE: ======
         in_channels = in_out_channels
+        # TODO: MARWA - should I use [inner_channels[0]] as part of channels?
         channels = [inner_channels[0]] + list(inner_channels) + [in_out_channels]
-        kernels= [1] + list(inner_kernel_sizes) + [1]
+        kernels = [1] + list(inner_kernel_sizes) + [1]
         ResidualBlock.__init__(self,
                                in_channels=in_channels,
                                channels=channels,
@@ -380,7 +409,9 @@ class ResNetClassifier(ConvClassifier):
 
     def _make_feature_extractor(self):
         self.conv_params['kernel_size'] = 3
-        self.conv_params['padding'] = int((3 - 1) / 2)
+        self.conv_params['padding'] = 1  # int((3 - 1) / 2)
+
+        # print(self.pooling_params)
 
         in_channels, in_h, in_w, = tuple(self.in_size)
 
@@ -401,9 +432,9 @@ class ResNetClassifier(ConvClassifier):
         N = len(self.channels)
         P = self.pool_every
 
-        for i in range(0, N, P):
-            channels = channels_list[i+1:i+P+1]
-
+        for i in range(0, N, P):            # (0, 5, 2) : [0,1,2,3,4]
+            channels = channels_list[i+1:i+P+1] if (i+P+1) <= len(channels_list) else channels_list[i+1:]
+            # TODO: - MARWA - fix end of list indexing
             res_block = ResidualBlock(channels_list[i],
                                       channels,
                                       kernel_sizes=[3]*len(channels),
@@ -414,6 +445,7 @@ class ResNetClassifier(ConvClassifier):
                                       )
             layers.append(res_block)
             layers.append(ACTIVATIONS[self.activation_type](*self.activation_params.values()))
+
             if i + P <= N:
                 layers.append(POOLINGS[self.pooling_type](*self.pooling_params.values()))
 
@@ -432,8 +464,8 @@ class YourCodeNet(ConvClassifier):
         hidden_dims,
         batchnorm=False,
         dropout=0.0,
-        conv_params ={},
-        pooling_params= {},
+        conv_params=dict(kernel_size=3, stride=1, padding=1),
+        pooling_params=dict(kernel_size=2),
         **kwargs,
     ):
         """
@@ -445,6 +477,13 @@ class YourCodeNet(ConvClassifier):
         super().__init__(
             in_size, out_classes, channels, pool_every, hidden_dims, conv_params=conv_params, pooling_params=pooling_params,**kwargs
         )
+
+        # self.conv_params = conv_params
+        # self.pooling_params = pooling_params
+        # TODO: Add any additional initialization as needed.
+        # ====== YOUR CODE: ======
+        # raise NotImplementedError()
+        # ========================
 
     # TODO: Change whatever you want about the ConvClassifier to try to
     #  improve it's results on CIFAR-10.

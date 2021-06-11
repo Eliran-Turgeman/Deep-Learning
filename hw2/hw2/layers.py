@@ -109,7 +109,7 @@ class LeakyReLU(Layer):
         return []
 
     def __repr__(self):
-        return f"LeakyReLU({self.alpha=})"
+        return f"LeakyReLU({self.alpha})"
 
 
 class ReLU(LeakyReLU):
@@ -284,7 +284,7 @@ class Linear(Layer):
         return dx
 
     def __repr__(self):
-        return f"Linear({self.in_features=}, {self.out_features=})"
+        return f"Linear({self.in_features}, {self.out_features})"
 
 
 class CrossEntropyLoss(Layer):
