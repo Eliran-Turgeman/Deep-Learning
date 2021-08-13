@@ -71,8 +71,10 @@ class KNNClassifier(object):
             #  - Set y_pred[i] to the most common class among them
             #  - Don't use an explicit loop.
             # ====== YOUR CODE: ======
-            k_labels = self.y_train[torch.topk(dist_matrix[:, i], self.k, largest=False).indices]
-            y_pred[i] = torch.mode(k_labels).values.item()
+            distances = dist_matrix[:, i]
+            k_nearest_values, k_nearest_indices = torch.topk(-distances, self.k)
+            values, counts = torch.unique(self.y_train[k_nearest_indices], return_counts=True)
+            y_pred[i] = values[torch.argmax(counts).item()]
             # ========================
 
         return y_pred
@@ -157,8 +159,17 @@ def find_best_k(ds_train: Dataset, k_choices, num_folds):
         #  random split each iteration), or implement something else.
         # ====== YOUR CODE: ======
         model_acc=[]
+        indices = np.append(np.arange(len(ds_train)), np.arange(len(ds_train)))
+        fold_size = int(np.floor(len(ds_train) / num_folds))
+        train_size = len(ds_train) - fold_size
+        
         for j in range(num_folds):
-            dl_train, dl_valid = dataloaders.create_train_validation_loaders(ds_train, 1.0/num_folds, batch_size=48)                                                                 
+            valid_start = int(np.floor(j * fold_size))
+            valid_sampler = torch.utils.data.SubsetRandomSampler(indices[valid_start:valid_start + fold_size])
+            dl_valid = torch.utils.data.DataLoader(ds_train, batch_size=64, sampler=valid_sampler)
+            train_start = valid_start + fold_size
+            train_sampler = torch.utils.data.SubsetRandomSampler(indices[train_start:train_start + train_size])
+            dl_train = torch.utils.data.DataLoader(ds_train, batch_size=64, sampler=train_sampler)
             model.train(dl_train)
             x_valid, y_valid = dataloader_utils.flatten(dl_valid)
             y_pred = model.predict(x_valid)
@@ -172,3 +183,6 @@ def find_best_k(ds_train: Dataset, k_choices, num_folds):
     best_k = k_choices[best_k_idx]
 
     return best_k, accuracies
+
+
+
