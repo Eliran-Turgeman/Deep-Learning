@@ -23,7 +23,7 @@ def part1_pg_hyperparams():
         beta=0.5,
         learn_rate=1e-3,
         eps=1e-8,
-        num_workers=2
+        num_workers=0
     )
     # ========================
     return hp
@@ -43,13 +43,13 @@ def part1_aac_hyperparams():
     #   them for your model implementation.
     # ====== YOUR CODE: ======
     hp = dict(
-        batch_size=4,
-        gamma=0.97,
-        beta=1,
-        delta=1,
-        learn_rate=1e-3,
+        batch_size=64,
+        gamma=0.99,
+        beta=0.333,
+        delta=1.5,
+        learn_rate=1.7*1e-3,
         eps=1e-8,
-        num_workers=2,
+        num_workers=0,
     )
     # ========================
     return hp
