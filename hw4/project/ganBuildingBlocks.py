@@ -18,7 +18,7 @@ import sys
 class DiscriminatorX(nn.Module):
     def __init__(self, in_size, spectral_norm_cond=False):
         """
-        :param in_size: The size of on input image (without batch dimension). 
+        :param in_size: The size of on input image (without batch dimension).
         """
         super().__init__()
         self.in_size = in_size

@@ -15,7 +15,7 @@ class Gan:
         :param z_dim: Dimension of latent space.
         :featuremap_size: Spatial size of first feature map to create
         (determines output size). For example set to 4 for a 4x4 feature map.
-        :out_channels: Number of channels in the generated image. 
+        :out_channels: Number of channels in the generated image.
         """
         self.discriminator = Discriminator(in_size, dscParams['spectral_norm_cond']).to(device)
         self.generator = Generator(genParams['z_dim'], genParams['featuremap_size'], genParams['out_channels']).to(device)

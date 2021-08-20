@@ -15,7 +15,7 @@ from matplotlib.pyplot import figure
 
 
 DATA_DIR = pathlib.Path().absolute().joinpath('project/pytorch-datasets')
-DEFAULT_DATA_URL = 'http://vis-www.cs.umass.edu/lfw/lfw-a.zip' 
+DEFAULT_DATA_URL = 'http://vis-www.cs.umass.edu/lfw/lfw-a.zip'
 #http://vis-www.cs.umass.edu/lfw/lfw-a.zip
 #http://vis-www.cs.umass.edu/lfw/lfw-bush.zip
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -104,6 +104,7 @@ def trainModels(ganModelNames, num_epochs=10):
     # train
     try:
         model_file_path = {}
+        print(type(ganModels))
         for ganName, ganModule in ganModels.items():
             model_file_path[ganName] = pathlib.Path().parent.absolute().joinpath(
                 f'project/results/{ganName}/')
