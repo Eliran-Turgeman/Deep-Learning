@@ -20,17 +20,15 @@ DEFAULT_DATA_URL = 'http://vis-www.cs.umass.edu/lfw/lfw-a.zip'
 #http://vis-www.cs.umass.edu/lfw/lfw-bush.zip
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-image_size = 64
-step = 10
-Unlimited = False
-#num_epochs = 99999 if Unlimited is False else math.inf
+IMSIZE = 64
+STEP = 10
 
 def generateDataSet(data_url=DEFAULT_DATA_URL):
     _, dataset_dir = cs236781.download.download_data(out_path=DATA_DIR, url=data_url, extract=True, force=False)
 
     tf = T.Compose([
         # Resize to constant spatial dimensions
-        T.Resize((image_size, image_size)),
+        T.Resize((IMSIZE, IMSIZE)),
         # PIL.Image -> torch.Tensor
         T.ToTensor(),
         # Dynamic range [0,1] -> [-1, 1]
@@ -51,13 +49,13 @@ def generateResults(train=False, num_epochs=10):
     for name in ganModelNames:
             modelPath = resultsDirPath + name
             generateResultsFromPath(name, modelPath)
-    print('Inception Score Comparition:')
+    print('Inception Score Comparison:')
     plotScore(resultsDirPath, ganModelNames, num_epochs)
 
 
 def plotScore(path, ganModelNames, num_epochs):
 
-    x = np.arange(0, num_epochs, step)
+    x = np.arange(0, num_epochs, STEP)
     xs = np.linspace(0, x[-1] - 1, 100)
     c = ['k', 'r', 'b', 'g']
     legends = []
@@ -66,7 +64,7 @@ def plotScore(path, ganModelNames, num_epochs):
         scores_file = path + modelName + '/scores.pt'
         y = torch.load(scores_file)
         y = [IS[0] for IS in y]
-        x = [i*step for i in range(0,len(y))]
+        x = [i*STEP for i in range(0,len(y))]
         xs = np.linspace(0, x[-1] - 1, 100)
         s = UnivariateSpline(x, y, s=5)
         ys = s(xs)
@@ -104,7 +102,6 @@ def trainModels(ganModelNames, num_epochs=10):
     # train
     try:
         model_file_path = {}
-        print(type(ganModels))
         for ganName, ganModule in ganModels.items():
             model_file_path[ganName] = pathlib.Path().parent.absolute().joinpath(
                 f'project/results/{ganName}/')
@@ -137,18 +134,18 @@ def trainModels(ganModelNames, num_epochs=10):
                 gen = ganModule.generator
                 dsc_avg_losses[ganName].append(np.mean(dsc_losses[ganName]))
                 gen_avg_losses[ganName].append(np.mean(gen_losses[ganName]))
-                if epoch_idx % step == 0:
+                if epoch_idx % STEP == 0:
                     print(f'{ganName}')
                     print(f'Discriminator loss: {dsc_avg_losses[ganName][-1]}')
                     print(f'Generator loss:     {gen_avg_losses[ganName][-1]}')
 
             for ganName, ganModule in ganModels.items():
-                if epoch_idx % step == 0:
+                if epoch_idx % STEP == 0:
                     print(f'========{ganName}========')
                     gen = ganModule.generator
                     samples = gen.sample(5, with_grad=False)
                     fig, _ = plot.tensors_as_images(samples.cpu(), figsize=(6, 2))
-                    # torch.save(fig, model_file_path[ganName].joinpath('fig.pt'))
+                    torch.save(fig, model_file_path[ganName].joinpath('fig.pt'))
                     IPython.display.display(fig)
                     plt.close(fig)
                     print(f'========================')
@@ -159,24 +156,25 @@ def trainModels(ganModelNames, num_epochs=10):
 
         ganModels = {ganName: ganModule.generator for ganName, ganModule in ganModels.items()}
     except KeyboardInterrupt as e:
-        # for ganName, ganModel in ganModels.items():
-        #     gen = ganModel.generator
-        #     samples = gen.sample(9, with_grad=False)
-        #     # fig, _ = plot.tensors_as_images(samples.cpu(), figsize=(6, 2))
-        #     torch.save(samples, model_file_path[ganName].joinpath('generated_samples.pt'))
-        #     # IS = inception_score(gen, cuda=True, batch_size=32, resize=True, splits=10, len=50000)
-        #     # with open(model_file_path[ganName].joinpath('inception_score.txt'), 'w') as f:
-        #     #     f.write(str(IS))
+        for ganName, ganModel in ganModels.items():
+            gen = ganModel.generator
+            samples = gen.sample(9, with_grad=False)
+            fig, _ = plot.tensors_as_images(samples.cpu(), figsize=(6, 2))
+            torch.save(samples, model_file_path[ganName].joinpath('generated_samples.pt'))
+            IS = inception_score(gen, cuda=True, batch_size=32, resize=True, splits=10, len=50000)
+            with open(model_file_path[ganName].joinpath('inception_score.txt'), 'w') as f:
+                f.write(str(IS))
         print('\n *** Training interrupted by user')
 
     for ganName, gen in ganModels.items():
         samples = gen.sample(50, with_grad=False)
-        # fig, _ = plot.tensors_as_images(samples.cpu(), figsize=(10, 2))
+        fig, _ = plot.tensors_as_images(samples.cpu(), figsize=(10, 2))
         torch.save(samples, model_file_path[ganName].joinpath('generated_samples.pt'))
-        # IS = inception_score(gen, cuda=True, batch_size=32, resize=True, splits=10, len=50000)
-        # with open(model_file_path[ganName].joinpath('inception_score.txt'), 'w') as f:
-        #     f.write(str(IS))
-        # print(f"Inception score for model - is: {IS}")
+        IS = inception_score(gen, cuda=True, batch_size=32, resize=True, splits=10, len=50000)
+
+        with open(model_file_path[ganName].joinpath('inception_score.txt'), 'w') as f:
+            f.write(str(IS))
+        print(f"Inception score for model - is: {IS}")
     print('Training Complete')
 
 
@@ -184,8 +182,8 @@ def trainModels(ganModelNames, num_epochs=10):
 def generateResultsFromPath(modelName, modelPath):
     print('=====================================')
     print(f'Model Type: {modelName}')
-    # with open(f'{modelPath}/inception_score.txt', 'r') as f:
-    #     print(f'Inception Score: {f.read()}')
+    with open(f'{modelPath}/inception_score.txt', 'r') as f:
+        print(f'Inception Score: {f.read()}')
     print(f'Generated Images: ')
     samples = torch.load(f'{modelPath}/generated_samples.pt')
     fig, _ = plot.tensors_as_images(samples.cpu(), figsize=(15,10), nrows=5)

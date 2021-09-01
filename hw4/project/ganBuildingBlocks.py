@@ -15,6 +15,7 @@ from scipy.stats import entropy
 import tqdm
 import sys
 
+
 class DiscriminatorX(nn.Module):
     def __init__(self, in_size, spectral_norm_cond=False):
         """
@@ -22,12 +23,7 @@ class DiscriminatorX(nn.Module):
         """
         super().__init__()
         self.in_size = in_size
-        # TODO: Create the discriminator model layers.
-        #  To extract image features you can use the EncoderCNN from the VAE
-        #  section or implement something new.
-        #  You can then use either an affine layer or another conv layer to
-        #  flatten the features.
-        # ====== YOUR CODE: ======
+        
         def spectral_norm_if_true(x, spectral_norm_cond):
             if spectral_norm_cond:
                 return spectral_norm(x)
@@ -48,7 +44,6 @@ class DiscriminatorX(nn.Module):
             nn.LeakyReLU(0.2),
             spectral_norm_if_true(nn.Conv2d(1024, 1, kernel_size=4, stride=1, padding=0, bias=False), spectral_norm_cond),
         )
-        # ========================
 
     def forward(self, x):
         """
@@ -56,14 +51,8 @@ class DiscriminatorX(nn.Module):
         :return: Discriminator class score (not probability) of
         shape (N,).
         """
-        # TODO: Implement discriminator forward pass.
-        #  No need to apply sigmoid to obtain probability - we'll combine it
-        #  with the loss due to improved numerical stability.
-        # ====== YOUR CODE: ======
-        y = self.encoder(x).flatten(1)
-        # ========================
-        return y
-
+        return self.encoder(x).flatten(1)
+        
 
 class Discriminator(nn.Module):
     def __init__(self, in_size, spectral_norm_cond=False):
@@ -72,12 +61,7 @@ class Discriminator(nn.Module):
         """
         super().__init__()
         self.in_size = in_size
-        # TODO: Create the discriminator model layers.
-        #  To extract image features you can use the EncoderCNN from the VAE
-        #  section or implement something new.
-        #  You can then use either an affine layer or another conv layer to
-        #  flatten the features.
-        # ====== YOUR CODE: ======
+
         def spectral_norm_if_true(x, spectral_norm_cond):
             if spectral_norm_cond:
                 return spectral_norm(x)
@@ -98,7 +82,6 @@ class Discriminator(nn.Module):
             nn.LeakyReLU(0.2),
             spectral_norm_if_true(nn.Conv2d(1024, 1, kernel_size=4, stride=1, padding=0, bias=False), spectral_norm_cond),
         )
-        # ========================
 
     def forward(self, x):
         """
@@ -106,13 +89,7 @@ class Discriminator(nn.Module):
         :return: Discriminator class score (not probability) of
         shape (N,).
         """
-        # TODO: Implement discriminator forward pass.
-        #  No need to apply sigmoid to obtain probability - we'll combine it
-        #  with the loss due to improved numerical stability.
-        # ====== YOUR CODE: ======
-        y = self.encoder(x).flatten(1)
-        # ========================
-        return y
+        return self.encoder(x).flatten(1)
 
 
 class Generator(nn.Module):
@@ -126,11 +103,6 @@ class Generator(nn.Module):
         super().__init__()
         self.z_dim = z_dim
 
-        # TODO: Create the generator model layers.
-        #  To combine image features you can use the DecoderCNN from the VAE
-        #  section or implement something new.
-        #  You can assume a fixed image size.
-        # ====== YOUR CODE: ======
         self.decoder = nn.Sequential(
             nn.ConvTranspose2d(self.z_dim, 1024, kernel_size=featuremap_size, stride=1, padding=0, bias=False),
             nn.BatchNorm2d(1024),
@@ -159,14 +131,11 @@ class Generator(nn.Module):
         :return: A batch of samples, shape (N,C,H,W).
         """
         device = next(self.parameters()).device
-        # TODO: Sample from the model.
-        #  Generate n latent space samples and return their reconstructions.
-        #  Don't use a loop.
-        # ====== YOUR CODE: ======
+
         with torch.set_grad_enabled(with_grad):
             z = torch.randn((n, self.z_dim), device=device)
             samples = self.forward(z)
-        # ========================
+
         return samples
 
     def forward(self, z):
@@ -175,13 +144,7 @@ class Generator(nn.Module):
         :return: A batch of generated images of shape (N,C,H,W) which should be
         the shape which the Discriminator accepts.
         """
-        # TODO: Implement the Generator forward pass.
-        #  Don't forget to make sure the output instances have the same
-        #  dynamic range as the original (real) images.
-        # ====== YOUR CODE: ======
-        x = self.decoder(z.view(-1, self.z_dim, 1, 1))
-        # ========================
-        return x
+        return self.decoder(z.view(-1, self.z_dim, 1, 1))
 
 
 def discriminator_loss_fn(y_data, y_generated, data_label=0, label_noise=0.0):
@@ -200,10 +163,7 @@ def discriminator_loss_fn(y_data, y_generated, data_label=0, label_noise=0.0):
     :return: The combined loss of both.
     """
     assert data_label == 1 or data_label == 0
-    # TODO:
-    #  Implement the discriminator loss.
-    #  See pytorch's BCEWithLogitsLoss for a numerically stable implementation.
-    # ====== YOUR CODE: ======
+
     loss_fn = nn.BCEWithLogitsLoss()
     label_noise_delta = label_noise / 2
     y_data_noise = torch.ones(y_data.shape).to(y_data.device)
@@ -211,7 +171,7 @@ def discriminator_loss_fn(y_data, y_generated, data_label=0, label_noise=0.0):
     y_data_noise.uniform_(data_label - label_noise_delta, data_label + label_noise_delta)
     y_generated_noise.uniform_(1 - data_label - label_noise_delta, 1 - data_label + label_noise_delta)
     loss_data, loss_generated = loss_fn(y_data, y_data_noise), loss_fn(y_generated, y_generated_noise)
-    # ========================
+
     return loss_data + loss_generated
 
 
@@ -226,15 +186,11 @@ def generator_loss_fn(y_generated, data_label=0):
     :return: The generator loss.
     """
     assert data_label == 1 or data_label == 0
-    # TODO:
-    #  Implement the Generator loss.
-    #  Think about what you need to compare the input to, in order to
-    #  formulate the loss in terms of Binary Cross Entropy.
-    # ====== YOUR CODE: ======
+
     loss_fn = nn.BCEWithLogitsLoss()
     generated_data_labels = torch.ones(y_generated.shape).to(y_generated.device) * data_label
     loss = loss_fn(y_generated, generated_data_labels)
-    # ========================
+
     return loss
 
 
@@ -250,11 +206,6 @@ def save_checkpoint(gen_model, dsc_losses, gen_losses, checkpoint_file):
     saved = False
     checkpoint_file = f"{checkpoint_file}.pt"
 
-    # TODO:
-    #  Save a checkpoint of the generator model. You can use torch.save().
-    #  You should decide what logic to use for deciding when to save.
-    #  If you save, set saved to True.
-    # ====== YOUR CODE: ======
     weight = 0.7
     loss_score = lambda loss_a, loss_b: loss_a * weight + loss_b * (1 - weight)
     threshold = loss_score(dsc_losses[-1], gen_losses[-1])
@@ -262,7 +213,6 @@ def save_checkpoint(gen_model, dsc_losses, gen_losses, checkpoint_file):
         if loss_score(dsc_loss, gen_loss) < threshold:
             torch.save(gen_model, checkpoint_file)
             saved = True
-    # ========================
 
     return saved
 
@@ -305,9 +255,6 @@ def create_optimizer(model_params, opt_params):
 
 
 def inception_score(gen, cuda=True, batch_size=32, resize=False, splits=1, len=50000):
-    """ Calculates inception score for a generator. Adapted from https://github.com/sbarratt/inception-score-pytorch
-    """
-    # N = len(imgs)
     N = len
 
     assert batch_size > 0
@@ -318,7 +265,7 @@ def inception_score(gen, cuda=True, batch_size=32, resize=False, splits=1, len=5
         dtype = torch.cuda.FloatTensor
     else:
         if torch.cuda.is_available():
-            print("WARNING: You have a CUDA device, so you should probably set cuda=True")
+            print("CUDA available but not used")
         dtype = torch.FloatTensor
 
     # Load inception model
@@ -326,6 +273,7 @@ def inception_score(gen, cuda=True, batch_size=32, resize=False, splits=1, len=5
     inception_model = inception_v3(pretrained=True, transform_input=False).type(dtype)
     inception_model.eval();
     up = nn.Upsample(size=(299, 299), mode='bilinear', align_corners=False).type(dtype)
+    
     def get_pred(x):
         if resize:
             x = up(x)
@@ -334,12 +282,12 @@ def inception_score(gen, cuda=True, batch_size=32, resize=False, splits=1, len=5
 
     # Get predictions
     preds = np.zeros((N, 1000))
-
     num_batches = N // batch_size
+    
     print(f"Generating {N} images in {num_batches} batches:")
+    
     with tqdm.tqdm(total=num_batches, file=sys.stdout) as pbar:
-        # for i, batch in enumerate(dataloader, 0):
-        for i in range(N // batch_size):
+        for i in range(num_batches):
             batch = gen.sample(batch_size).cpu()
             batch = batch.type(dtype)
             batchv = Variable(batch)
@@ -347,6 +295,7 @@ def inception_score(gen, cuda=True, batch_size=32, resize=False, splits=1, len=5
 
             preds[i*batch_size:i*batch_size + batch_size_i] = get_pred(batchv)
             pbar.update()
+            
     if N % batch_size != 0: # extra batch
         batch = gen.sample(N % batch_size).cpu()
         batch = batch.type(dtype)

@@ -2,7 +2,6 @@ from project.ganBuildingBlocks import *
 
 
 class Gan:
-    # def __init__(self, in_size, z_dim, featuremap_size=4, out_channels=3, device='cpu', spectral_norm_cond=False, with_gradient_penalty=False, **kw):
     def __init__(self, in_size,
                  dscParams=BaselineGanHP['dscParams'],
                  dscOptimizerParams=BaselineGanHP['optimizerParams'],
@@ -66,28 +65,26 @@ class Gan:
 
     def trainBatch(self, x_data: DataLoader):
         self.dscOptimizer.zero_grad()
-        generatedData = self.generator.sample(x_data.shape[0])
-        realDataProb = self.discriminator(x_data)
-        genDataProb = self.discriminator(generatedData)
-        gradPenalty = gradient_penalty(x_data, generatedData, self.discriminator) if self.with_gradient_penalty else 0.
-        dscLoss = self.discLossFn(realDataProb, genDataProb) + gradPenalty
-        dscLoss.backward()
+        generate_data = self.generator.sample(x_data.shape[0])
+        real_data_prob = self.discriminator(x_data)
+        gen_data_prob = self.discriminator(generate_data)
+        grad_penalty = gradient_penalty(x_data, generate_data, self.discriminator) if self.with_gradient_penalty else 0.
+        dsc_loss = self.discLossFn(real_data_prob, gen_data_prob) + grad_penalty
+        dsc_loss.backward()
         self.dscOptimizer.step()
 
         self.genOptimizer.zero_grad()
-        generatedData = self.generator.sample(x_data.shape[0], with_grad=True)
-        genDataProb = self.discriminator(generatedData)
-        genLoss = self.genLossFn(genDataProb)
-        genLoss.backward()
+        generate_data = self.generator.sample(x_data.shape[0], with_grad=True)
+        gen_data_prob = self.discriminator(generate_data)
+        gen_loss = self.genLossFn(gen_data_prob)
+        gen_loss.backward()
         self.genOptimizer.step()
 
-        return dscLoss.item(), genLoss.item()
+        return dsc_loss.item(), gen_loss.item()
 
 
 class SnGan(Gan):
     def __init__(self, in_size, device='cpu'):
-        # super().__init__(in_size, z_dim, featuremap_size=featuremap_size, out_channels=out_channels, device=device,
-        #                  spectral_norm_cond=True, kw=SNParams)
         super().__init__(in_size, **SNGanHP, device=device)
 
 
