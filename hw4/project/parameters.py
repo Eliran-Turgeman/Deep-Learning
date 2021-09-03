@@ -7,7 +7,7 @@ BaselineGanHP = dict(
     genParams=dict(z_dim=4, featuremap_size=4, out_channels=3),
     dscLossParams=dict(label_noise=0.2, data_label=1),
     genLossParams=dict(data_label=1),
-    optimizerParams=dict(type='Adam', lr=0.01, betas=(0.5, 0.99)),
+    optimizerParams=dict(type='Adam', lr=0.0002, betas=(0.5, 0.99)),
     trainBatchParams=dict(with_gradient_penalty=False)
 )
 
@@ -16,7 +16,7 @@ SNGanHP = dict(
     genParams=dict(z_dim=4, featuremap_size=4, out_channels=3),
     dscLossParams=dict(label_noise=0.2, data_label=1),
     genLossParams=dict(data_label=1),
-    optimizerParams=dict(type='Adam', lr=0.01, betas=(0.5, 0.99)),
+    optimizerParams=dict(type='Adam', lr=0.0002, betas=(0.5, 0.99)),
     trainBatchParams=dict(with_gradient_penalty=False)
 )
 
@@ -25,7 +25,7 @@ WGanHP = dict(
     genParams=dict(z_dim=4, featuremap_size=4, out_channels=3),
     dscLossParams=dict(label_noise=0.2, data_label=1),
     genLossParams=dict(data_label=1),
-    optimizerParams=dict(type='Adam', lr=0.01, betas=(0.5, 0.99)),
+    optimizerParams=dict(type='Adam', lr=0.0002, betas=(0.5, 0.99)),
     trainBatchParams=dict(with_gradient_penalty=True)
 )
 
@@ -34,7 +34,7 @@ SNWGanHP = dict(
     genParams=dict(z_dim=4, featuremap_size=4, out_channels=3),
     dscLossParams=dict(label_noise=0.2, data_label=1),
     genLossParams=dict(data_label=1),
-    optimizerParams=dict(type='Adam', lr=0.01, betas=(0.5, 0.99)),
+    optimizerParams=dict(type='Adam', lr=0.0002, betas=(0.5, 0.99)),
     trainBatchParams=dict(with_gradient_penalty=True)
 )
 
